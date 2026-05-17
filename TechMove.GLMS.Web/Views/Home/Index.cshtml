@@ -1,0 +1,75 @@
+﻿@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="row mb-4">
+    <div class="col-12">
+        <h1>Dashboard</h1>
+        <p class="text-muted">Welcome to TechMove Global Logistics Management System</p>
+    </div>
+</div>
+
+<div class="row g-4 mb-5">
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-number" id="clientCount">0</div>
+            <div class="stat-label">Total Clients</div>
+            <i class="bi bi-people" style="font-size: 2rem; color: var(--gold); margin-top: 0.5rem; display: inline-block;"></i>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-number" id="agreementCount">0</div>
+            <div class="stat-label">Active Agreements</div>
+            <i class="bi bi-file-contract" style="font-size: 2rem; color: var(--gold); margin-top: 0.5rem; display: inline-block;"></i>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-number" id="requestCount">0</div>
+            <div class="stat-label">Service Requests</div>
+            <i class="bi bi-truck" style="font-size: 2rem; color: var(--gold); margin-top: 0.5rem; display: inline-block;"></i>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-lightning"></i> Quick Actions</div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="/Clients/Create" class="btn btn-primary"><i class="bi bi-person-plus"></i> Add New Client</a>
+                    <a href="/Agreements/Create" class="btn btn-primary"><i class="bi bi-file-earmark-plus"></i> Create Agreement</a>
+                    <a href="/ServiceRequests/Create" class="btn btn-gold"><i class="bi bi-plus-circle"></i> New Service Request</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-info-circle"></i> System Status</div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2"><span>System:</span><span class="badge bg-success">Operational</span></div>
+                <div class="d-flex justify-content-between mb-2"><span>Database:</span><span class="badge bg-success">Connected</span></div>
+                <div class="d-flex justify-content-between"><span>Currency API:</span><span class="badge bg-warning">Ready</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        async function loadStats() {
+            try {
+                const clients = await fetch('/api/stats/clients').then(r => r.json()).catch(() => 0);
+                const agreements = await fetch('/api/stats/agreements').then(r => r.json()).catch(() => 0);
+                const requests = await fetch('/api/stats/requests').then(r => r.json()).catch(() => 0);
+                document.getElementById('clientCount').innerText = clients;
+                document.getElementById('agreementCount').innerText = agreements;
+                document.getElementById('requestCount').innerText = requests;
+            } catch(e) { console.log("Stats loading"); }
+        }
+        loadStats();
+    </script>
+}

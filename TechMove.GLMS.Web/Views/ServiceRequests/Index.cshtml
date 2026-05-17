@@ -1,0 +1,124 @@
+﻿@model IEnumerable<TechMove.GLMS.Web.Models.ServiceRequest>
+
+@{
+    ViewData["Title"] = "Service Requests";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Service Requests</h1>
+    <a asp-action="Create" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> New Service Request
+    </a>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show">
+        <i class="bi bi-check-circle"></i> @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show">
+        <i class="bi bi-exclamation-triangle"></i> @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<!-- Search/Filter Section -->
+<div class="card mb-4">
+    <div class="card-header">
+        <i class="bi bi-funnel"></i> Filter Service Requests
+    </div>
+    <div class="card-body">
+        <form method="get" asp-action="Index" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Status</label>
+                <select name="status" class="form-select">
+                    <option value="All">All Statuses</option>
+                    @foreach (var status in Enum.GetValues(typeof(TechMove.GLMS.Web.Models.RequestStatusType)))
+                    {
+                        <option value="@status" selected="@(ViewBag.CurrentStatus == status.ToString())">@status</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Start Date</label>
+                <input type="date" name="start" class="form-control" value="@ViewBag.CurrentStart" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">End Date</label>
+                <input type="date" name="end" class="form-control" value="@ViewBag.CurrentEnd" />
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-search"></i> Apply Filters
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>Client</th>
+                <th>Description</th>
+                <th>USD</th>
+                <th>ZAR</th>
+                <th>Exchange Rate</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.Agreement?.Client?.Name</td>
+                    <td>@item.Description</td>
+                    <td>$@item.AmountUSD.ToString("N2")</td>
+                    <td>R@item.AmountZAR.ToString("N2")</td>
+                    <td>@item.ExchangeRateUsed.ToString("N4")</td>
+                    <td>@item.RequestDate.ToShortDateString()</td>
+                    <td>
+                        @{
+                            string badgeClass = item.Status switch
+                            {
+                                RequestStatusType.Pending => "bg-warning",
+                                RequestStatusType.Approved => "bg-info",
+                                RequestStatusType.InProgress => "bg-primary",
+                                RequestStatusType.Completed => "bg-success",
+                                _ => "bg-secondary"
+                            };
+                        }
+                        <span class="badge @badgeClass">@item.Status</span>
+                    </td>
+                    <td>
+                        <a asp-action="Edit" asp-route-id="@item.ServiceRequestId" class="btn btn-sm btn-warning">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <a asp-action="Details" asp-route-id="@item.ServiceRequestId" class="btn btn-sm btn-info">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                        <a asp-action="Delete" asp-route-id="@item.ServiceRequestId" class="btn btn-sm btn-danger">
+                            <i class="bi bi-trash"></i>
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info text-center">
+        <i class="bi bi-info-circle"></i> No service requests found.
+        <a asp-action="Create">Create your first service request</a>
+    </div>
+}

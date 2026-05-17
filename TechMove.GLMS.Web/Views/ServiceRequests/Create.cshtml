@@ -1,0 +1,107 @@
+﻿@model TechMove.GLMS.Web.Models.ServiceRequest
+
+@{
+    ViewData["Title"] = "Create Service Request";
+}
+
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-plus-circle"></i> Create Service Request
+            </div>
+            <div class="card-body">
+                <form asp-action="Create">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="AgreementId" class="form-label">Active Agreement</label>
+                        <select asp-for="AgreementId" class="form-select" asp-items="ViewBag.AgreementId">
+                            <option value="">-- Select Active Agreement --</option>
+                        </select>
+                        <span asp-validation-for="AgreementId" class="text-danger"></span>
+                        <small class="text-muted">Only ACTIVE agreements can have service requests</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Description" class="form-label">Description</label>
+                        <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                        <span asp-validation-for="Description" class="text-danger"></span>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="AmountUSD" class="form-label">Amount (USD)</label>
+                            <input asp-for="AmountUSD" id="AmountUSD" type="number" step="0.01" class="form-control" />
+                            <span asp-validation-for="AmountUSD" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="AmountZAR" class="form-label">Amount (ZAR)</label>
+                            <input asp-for="AmountZAR" id="AmountZAR" type="number" step="0.01" class="form-control" readonly style="background-color: #f8f9fa;" />
+                            <small class="text-muted">Auto-calculated using live exchange rate</small>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Live Exchange Rate (USD → ZAR)</label>
+                        <div class="alert alert-info">
+                            <span id="rateDisplay">Loading exchange rate...</span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="RequestDate" class="form-label">Request Date</label>
+                        <input asp-for="RequestDate" type="date" class="form-control" />
+                        <span asp-validation-for="RequestDate" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Status" class="form-label">Status</label>
+                        <select asp-for="Status" class="form-select" asp-items="Html.GetEnumSelectList<TechMove.GLMS.Web.Models.RequestStatusType>()"></select>
+                        <span asp-validation-for="Status" class="text-danger"></span>
+                    </div>
+
+                    <hr />
+                    <div class="d-flex justify-content-between">
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Back
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i> Create
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        var currentRate = 19.50;
+
+        function loadExchangeRate() {
+            fetch('/ServiceRequests/GetExchangeRate')
+                .then(function(response) { return response.json(); })
+                .then(function(data) {
+                    currentRate = data.rate;
+                    document.getElementById('rateDisplay').innerHTML = '<strong>1 USD = ' + currentRate.toFixed(4) + ' ZAR</strong>';
+                    calculateZAR();
+                })
+                .catch(function() {
+                    document.getElementById('rateDisplay').innerHTML = '<span class="text-warning">Using fallback: 1 USD = 19.50 ZAR</span>';
+                });
+        }
+
+        function calculateZAR() {
+            var usd = parseFloat(document.getElementById('AmountUSD').value) || 0;
+            document.getElementById('AmountZAR').value = (usd * currentRate).toFixed(2);
+        }
+
+        document.getElementById('AmountUSD').addEventListener('input', calculateZAR);
+        loadExchangeRate();
+    </script>
+}
