@@ -7,7 +7,7 @@ WORKDIR /src
 
 # Copy everything and restore
 COPY . .
-WORKDIR "/src/TechMove.GLMS.Web"
+WORKDIR "/src/TechMove.GLMS.API/TechMove.GLMS.API"
 RUN dotnet restore
 
 # Build
@@ -19,4 +19,4 @@ RUN dotnet publish -c Release -o /app/publish
 FROM base AS final
 WORKDIR /app
 COPY --from=build /app/publish .
-ENTRYPOINT ["dotnet", "TechMove.GLMS.Web.dll"]
+ENTRYPOINT ["dotnet", "TechMove.GLMS.API.dll"]
