@@ -39,24 +39,45 @@ namespace TechMove.GLMS.Web.Controllers
             return View(request);
         }
 
+        // GET: ServiceRequests/Create - SHOW ALL AGREEMENTS (including Draft, Expired, On Hold)
         public async Task<IActionResult> Create()
         {
-            var activeAgreements = await _context.Agreements.Include(a => a.Client).Where(a => a.Status == AgreementStatus.Active).ToListAsync();
-            ViewBag.AgreementId = new SelectList(activeAgreements, "AgreementId", "Client.Name");
-            if (!activeAgreements.Any()) TempData["Error"] = "No active agreements found.";
+            // FIX: Show ALL agreements, not just Active ones
+            var allAgreements = await _context.Agreements
+                .Include(a => a.Client)
+                .ToListAsync();
+
+            ViewBag.AgreementId = new SelectList(allAgreements, "AgreementId", "Client.Name");
+
+            if (!allAgreements.Any())
+                TempData["Error"] = "No agreements found. Please create an agreement first.";
+
             return View();
         }
 
+        // POST: ServiceRequests/Create - VALIDATE and SHOW ERROR if not Active
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("AgreementId,Description,AmountUSD,RequestDate,Status")] ServiceRequest serviceRequest)
         {
             var agreement = await _context.Agreements.FindAsync(serviceRequest.AgreementId);
-            if (agreement == null || agreement.Status != AgreementStatus.Active)
+
+            // FIX: Show specific error message based on agreement status
+            if (agreement == null)
             {
-                ModelState.AddModelError("", "Cannot create request. Agreement must be ACTIVE.");
-                await PopulateAgreementList();
+                ModelState.AddModelError("AgreementId", "Please select a valid agreement.");
+                await PopulateAllAgreementsList();
                 return View(serviceRequest);
             }
+
+            // FIX: Check if agreement is NOT Active, show specific error
+            if (agreement.Status != AgreementStatus.Active)
+            {
+                string statusMessage = agreement.Status.ToString();
+                ModelState.AddModelError("AgreementId", $"Cannot create service request. This agreement is {statusMessage}. Only ACTIVE agreements can have service requests.");
+                await PopulateAllAgreementsList();
+                return View(serviceRequest);
+            }
+
             if (ModelState.IsValid)
             {
                 decimal rate = await GetExchangeRateAsync();
@@ -65,10 +86,11 @@ namespace TechMove.GLMS.Web.Controllers
                 if (serviceRequest.Status == 0) serviceRequest.Status = RequestStatusType.Pending;
                 _context.Add(serviceRequest);
                 await _context.SaveChangesAsync();
-                TempData["Success"] = $"Request created! Rate: 1 USD = {rate} ZAR";
+                TempData["Success"] = $"Service request created successfully! Exchange rate used: 1 USD = {rate} ZAR";
                 return RedirectToAction(nameof(Index));
             }
-            await PopulateAgreementList();
+
+            await PopulateAllAgreementsList();
             return View(serviceRequest);
         }
 
@@ -77,8 +99,10 @@ namespace TechMove.GLMS.Web.Controllers
             if (id == null) return NotFound();
             var request = await _context.ServiceRequests.Include(s => s.Agreement).FirstOrDefaultAsync(s => s.ServiceRequestId == id);
             if (request == null) return NotFound();
-            var activeAgreements = await _context.Agreements.Where(a => a.Status == AgreementStatus.Active).ToListAsync();
-            ViewBag.AgreementId = new SelectList(activeAgreements, "AgreementId", "Client.Name", request.AgreementId);
+
+            // FIX: Show ALL agreements for edit, not just Active
+            var allAgreements = await _context.Agreements.Include(a => a.Client).ToListAsync();
+            ViewBag.AgreementId = new SelectList(allAgreements, "AgreementId", "Client.Name", request.AgreementId);
             return View(request);
         }
 
@@ -86,20 +110,35 @@ namespace TechMove.GLMS.Web.Controllers
         public async Task<IActionResult> Edit(int id, [Bind("ServiceRequestId,AgreementId,Description,AmountUSD,AmountZAR,RequestDate,Status,ExchangeRateUsed")] ServiceRequest serviceRequest)
         {
             if (id != serviceRequest.ServiceRequestId) return NotFound();
+
             var agreement = await _context.Agreements.FindAsync(serviceRequest.AgreementId);
+
+            // FIX: Show specific error message based on agreement status during edit
             if (agreement?.Status != AgreementStatus.Active)
             {
-                ModelState.AddModelError("", "Cannot edit. Agreement must be ACTIVE.");
-                await PopulateAgreementList();
+                string statusMessage = agreement?.Status.ToString() ?? "Unknown";
+                ModelState.AddModelError("AgreementId", $"Cannot edit. This agreement is {statusMessage}. Only ACTIVE agreements can have service requests.");
+                await PopulateAllAgreementsList();
                 return View(serviceRequest);
             }
+
             if (ModelState.IsValid)
             {
-                try { _context.Update(serviceRequest); await _context.SaveChangesAsync(); }
-                catch (DbUpdateConcurrencyException) { if (!RequestExists(serviceRequest.ServiceRequestId)) return NotFound(); else throw; }
+                try
+                {
+                    _context.Update(serviceRequest);
+                    await _context.SaveChangesAsync();
+                    TempData["Success"] = "Service request updated successfully!";
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!RequestExists(serviceRequest.ServiceRequestId)) return NotFound();
+                    else throw;
+                }
                 return RedirectToAction(nameof(Index));
             }
-            await PopulateAgreementList();
+
+            await PopulateAllAgreementsList();
             return View(serviceRequest);
         }
 
@@ -117,6 +156,7 @@ namespace TechMove.GLMS.Web.Controllers
             var request = await _context.ServiceRequests.FindAsync(id);
             if (request != null) _context.ServiceRequests.Remove(request);
             await _context.SaveChangesAsync();
+            TempData["Success"] = "Service request deleted successfully!";
             return RedirectToAction(nameof(Index));
         }
 
@@ -140,10 +180,13 @@ namespace TechMove.GLMS.Web.Controllers
             catch { return 19.50m; }
         }
 
-        private async Task PopulateAgreementList()
+        // FIX: New method to populate ALL agreements (not just Active)
+        private async Task PopulateAllAgreementsList()
         {
-            var active = await _context.Agreements.Include(a => a.Client).Where(a => a.Status == AgreementStatus.Active).ToListAsync();
-            ViewBag.AgreementId = new SelectList(active, "AgreementId", "Client.Name");
+            var allAgreements = await _context.Agreements
+                .Include(a => a.Client)
+                .ToListAsync();
+            ViewBag.AgreementId = new SelectList(allAgreements, "AgreementId", "Client.Name");
         }
 
         private bool RequestExists(int id) => _context.ServiceRequests.Any(e => e.ServiceRequestId == id);

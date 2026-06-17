@@ -27,7 +27,6 @@
     </div>
 }
 
-<!-- Search/Filter Section -->
 <div class="card mb-4">
     <div class="card-header">
         <i class="bi bi-funnel"></i> Filter Service Requests
@@ -40,7 +39,7 @@
                     <option value="All">All Statuses</option>
                     @foreach (var status in Enum.GetValues(typeof(TechMove.GLMS.Web.Models.RequestStatusType)))
                     {
-                        <option value="@status" selected="@(ViewBag.CurrentStatus == status.ToString())">@status</option>
+                        <option value="@status">@status</option>
                     }
                 </select>
             </div>
@@ -79,22 +78,20 @@
             @foreach (var item in Model)
             {
                 <tr>
-                    <td>@item.Agreement?.Client?.Name</td>
+                    <td>@(item.Agreement?.Client?.Name ?? "N/A")</td>
                     <td>@item.Description</td>
-                    <td>$@item.AmountUSD.ToString("N2")</td>
-                    <td>R@item.AmountZAR.ToString("N2")</td>
-                    <td>@item.ExchangeRateUsed.ToString("N4")</td>
-                    <td>@item.RequestDate.ToShortDateString()</td>
+                    <td>$@(item.AmountUSD.ToString("0.00"))</td>
+                    <td>R @(item.AmountZAR.ToString("0.00"))</td>
+                    <td>@(item.ExchangeRateUsed.ToString("0.0000"))</td>
+                    <td>@(item.RequestDate.ToString("yyyy-MM-dd"))</td>
                     <td>
                         @{
-                            string badgeClass = item.Status switch
-                            {
-                                RequestStatusType.Pending => "bg-warning",
-                                RequestStatusType.Approved => "bg-info",
-                                RequestStatusType.InProgress => "bg-primary",
-                                RequestStatusType.Completed => "bg-success",
-                                _ => "bg-secondary"
-                            };
+                            string badgeClass = "bg-secondary";
+                            if (item.Status == RequestStatusType.Pending) badgeClass = "bg-warning";
+                            else if (item.Status == RequestStatusType.Approved) badgeClass = "bg-info";
+                            else if (item.Status == RequestStatusType.InProgress) badgeClass = "bg-primary";
+                            else if (item.Status == RequestStatusType.Completed) badgeClass = "bg-success";
+                            else if (item.Status == RequestStatusType.Cancelled) badgeClass = "bg-danger";
                         }
                         <span class="badge @badgeClass">@item.Status</span>
                     </td>

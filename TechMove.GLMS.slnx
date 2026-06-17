@@ -1,4 +1,8 @@
 <Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="docker-compose.yml.txt" />
+  </Folder>
+  <Project Path="../TechMove.GLMS.API/TechMove.GLMS.API/TechMove.GLMS.API.csproj" />
   <Project Path="TechMove.GLMS.Tests/TechMove.GLMS.Tests.csproj" />
   <Project Path="TechMove.GLMS.Web/TechMove.GLMS.Web.csproj" />
 </Solution>

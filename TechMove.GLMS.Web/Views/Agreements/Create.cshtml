@@ -4,6 +4,22 @@
     ViewData["Title"] = "Create Agreement";
 }
 
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle"></i> @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger">
+        <i class="bi bi-exclamation-triangle"></i>
+        <div asp-validation-summary="All" class="text-danger"></div>
+    </div>
+}
+
 <div class="row">
     <div class="col-md-8 mx-auto">
         <div class="card">
@@ -12,7 +28,7 @@
             </div>
             <div class="card-body">
                 <form asp-action="Create" enctype="multipart/form-data">
-                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
                     <div class="mb-3">
                         <label asp-for="ClientId" class="form-label">Client</label>
@@ -56,8 +72,12 @@
 
                     <div class="mb-3">
                         <label for="pdfFile" class="form-label">Signed Agreement (PDF only)</label>
-                        <input type="file" name="pdfFile" class="form-control" accept=".pdf" />
-                        <small class="text-muted">Upload signed agreement PDF</small>
+                        <input type="file" name="pdfFile" id="pdfFile" class="form-control" accept=".pdf" />
+                        <span id="pdfFileError" class="text-danger"></span>
+                        <div class="form-text text-muted">
+                            <i class="bi bi-info-circle"></i> Only PDF files are accepted.
+                            <span class="text-warning">Files like .exe, .jpg, .png, .docx will be rejected.</span>
+                        </div>
                     </div>
 
                     <hr />
@@ -79,4 +99,29 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+    <script>
+        // Client-side file validation to show error before submitting
+        document.getElementById('pdfFile').addEventListener('change', function() {
+            var fileInput = this;
+            var file = fileInput.files[0];
+            var errorSpan = document.getElementById('pdfFileError');
+            
+            if (file) {
+                var fileName = file.name;
+                var fileExtension = fileName.split('.').pop().toLowerCase();
+                
+                if (fileExtension !== 'pdf') {
+                    errorSpan.innerHTML = '<i class="bi bi-x-circle"></i> ERROR: Only PDF files are allowed. You selected a .' + fileExtension + ' file.';
+                    fileInput.value = ''; // Clear the invalid file
+                } else {
+                    errorSpan.innerHTML = '<i class="bi bi-check-circle"></i> Valid PDF file selected.';
+                    setTimeout(function() {
+                        errorSpan.innerHTML = '';
+                    }, 3000);
+                }
+            } else {
+                errorSpan.innerHTML = '';
+            }
+        });
+    </script>
 }

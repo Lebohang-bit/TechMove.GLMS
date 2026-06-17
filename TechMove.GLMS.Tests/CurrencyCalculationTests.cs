@@ -8,62 +8,62 @@ namespace TechMove.GLMS.Tests
         [Fact]
         public void ConvertUSDToZAR_WithValidRate_ReturnsCorrectZARAmount()
         {
-            // Arrange
+            
             decimal amountUSD = 100.00m;
             decimal exchangeRate = 19.50m;
             decimal expectedZAR = 1950.00m;
 
-            // Act
+            
             decimal actualZAR = amountUSD * exchangeRate;
 
-            // Assert
+            
             Assert.Equal(expectedZAR, actualZAR);
         }
 
         [Fact]
         public void ConvertUSDToZAR_WithZeroUSD_ReturnsZeroZAR()
         {
-            // Arrange
+            
             decimal amountUSD = 0.00m;
             decimal exchangeRate = 19.50m;
             decimal expectedZAR = 0.00m;
 
-            // Act
+           
             decimal actualZAR = amountUSD * exchangeRate;
 
-            // Assert
+            
             Assert.Equal(expectedZAR, actualZAR);
         }
 
         [Fact]
         public void ConvertUSDToZAR_WithDifferentRate_CalculatesCorrectly()
         {
-            // Arrange
+            
             decimal amountUSD = 50.00m;
             decimal exchangeRate = 18.75m;
             decimal expectedZAR = 937.50m;
 
-            // Act
+            
             decimal actualZAR = amountUSD * exchangeRate;
 
-            // Assert
+            
             Assert.Equal(expectedZAR, actualZAR);
         }
 
         [Fact]
         public void ServiceRequest_AmountZAR_IsCalculatedFromUSDAndExchangeRate()
         {
-            // Arrange
+            
             var serviceRequest = new ServiceRequest
             {
                 AmountUSD = 250.00m,
                 ExchangeRateUsed = 19.50m
             };
 
-            // Act
+            
             serviceRequest.AmountZAR = serviceRequest.AmountUSD * serviceRequest.ExchangeRateUsed;
 
-            // Assert
+           
             Assert.Equal(4875.00m, serviceRequest.AmountZAR);
         }
 
@@ -76,10 +76,10 @@ namespace TechMove.GLMS.Tests
         public void CurrencyConversion_MultipleScenarios_ReturnsCorrectZAR(
             decimal usd, decimal rate, decimal expectedZar)
         {
-            // Act
+           
             decimal actualZar = usd * rate;
 
-            // Assert
+            
             Assert.Equal(expectedZar, actualZar);
         }
     }

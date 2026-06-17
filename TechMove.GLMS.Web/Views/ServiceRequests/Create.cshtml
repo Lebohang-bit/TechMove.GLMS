@@ -4,6 +4,22 @@
     ViewData["Title"] = "Create Service Request";
 }
 
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle"></i> @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger">
+        <i class="bi bi-exclamation-triangle"></i>
+        <div asp-validation-summary="All" class="text-danger"></div>
+    </div>
+}
+
 <div class="row">
     <div class="col-md-8 mx-auto">
         <div class="card">
@@ -12,15 +28,18 @@
             </div>
             <div class="card-body">
                 <form asp-action="Create">
-                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
                     <div class="mb-3">
-                        <label asp-for="AgreementId" class="form-label">Active Agreement</label>
+                        <label asp-for="AgreementId" class="form-label">Select Agreement</label>
                         <select asp-for="AgreementId" class="form-select" asp-items="ViewBag.AgreementId">
-                            <option value="">-- Select Active Agreement --</option>
+                            <option value="">-- Select an Agreement --</option>
                         </select>
                         <span asp-validation-for="AgreementId" class="text-danger"></span>
-                        <small class="text-muted">Only ACTIVE agreements can have service requests</small>
+                        <small class="text-muted text-warning">
+                            <i class="bi bi-info-circle"></i> WARNING: Only ACTIVE agreements can create service requests.
+                            If you select Draft, Expired, or On Hold, an error will appear.
+                        </small>
                     </div>
 
                     <div class="mb-3">
@@ -43,7 +62,7 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Live Exchange Rate (USD → ZAR)</label>
+                        <label class="form-label">Live Exchange Rate (USD to ZAR)</label>
                         <div class="alert alert-info">
                             <span id="rateDisplay">Loading exchange rate...</span>
                         </div>
@@ -88,20 +107,35 @@
                 .then(function(response) { return response.json(); })
                 .then(function(data) {
                     currentRate = data.rate;
-                    document.getElementById('rateDisplay').innerHTML = '<strong>1 USD = ' + currentRate.toFixed(4) + ' ZAR</strong>';
+                    var displayElement = document.getElementById('rateDisplay');
+                    if (displayElement) {
+                        displayElement.innerHTML = '<strong>1 USD = ' + currentRate.toFixed(4) + ' ZAR</strong> <i class="bi bi-check-circle"></i>';
+                    }
                     calculateZAR();
                 })
                 .catch(function() {
-                    document.getElementById('rateDisplay').innerHTML = '<span class="text-warning">Using fallback: 1 USD = 19.50 ZAR</span>';
+                    var displayElement = document.getElementById('rateDisplay');
+                    if (displayElement) {
+                        displayElement.innerHTML = '<span class="text-warning">Using fallback: 1 USD = 19.50 ZAR</span>';
+                    }
+                    currentRate = 19.50;
                 });
         }
 
         function calculateZAR() {
-            var usd = parseFloat(document.getElementById('AmountUSD').value) || 0;
-            document.getElementById('AmountZAR').value = (usd * currentRate).toFixed(2);
+            var usdInput = document.getElementById('AmountUSD');
+            var zarInput = document.getElementById('AmountZAR');
+            if (usdInput && zarInput) {
+                var usd = parseFloat(usdInput.value) || 0;
+                zarInput.value = (usd * currentRate).toFixed(2);
+            }
         }
 
-        document.getElementById('AmountUSD').addEventListener('input', calculateZAR);
+        var usdElement = document.getElementById('AmountUSD');
+        if (usdElement) {
+            usdElement.addEventListener('input', calculateZAR);
+        }
+        
         loadExchangeRate();
     </script>
 }
